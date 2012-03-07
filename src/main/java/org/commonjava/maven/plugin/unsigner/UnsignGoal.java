@@ -87,7 +87,7 @@ public class UnsignGoal
         }
 
         final List<Artifact> attached = project.getAttachedArtifacts();
-        if ( !processAttachments && attached != null )
+        if ( processAttachments && attached != null )
         {
             for ( final Artifact attachment : attached )
             {
