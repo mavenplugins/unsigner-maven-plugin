@@ -9,7 +9,7 @@
   
   <groupId>org.commonjava.maven.plugins</groupId>
   <artifactId>unsigner-maven-plugin</artifactId>
-  <version>0.1</version>
+  <version>0.2-SNAPSHOT</version>
   <packaging>maven-plugin</packaging>
 
   <name>Unsigner Plugin for Maven</name>
