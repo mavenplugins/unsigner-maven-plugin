@@ -16,6 +16,9 @@
 
 package org.commonjava.maven.plugin.unsigner;
 
+import java.io.File;
+import java.util.List;
+
 import org.apache.maven.artifact.Artifact;
 import org.apache.maven.plugin.Mojo;
 import org.apache.maven.plugin.MojoExecutionException;
@@ -23,9 +26,6 @@ import org.apache.maven.plugin.MojoFailureException;
 import org.apache.maven.plugin.logging.Log;
 import org.apache.maven.plugin.logging.SystemStreamLog;
 import org.apache.maven.project.MavenProject;
-
-import java.io.File;
-import java.util.List;
 
 /**
  * @goal unsign
@@ -55,6 +55,7 @@ public class UnsignGoal
 
     /**
      * {@inheritDoc}
+     * 
      * @see org.apache.maven.plugin.Mojo#execute()
      */
     public void execute()
@@ -69,12 +70,20 @@ public class UnsignGoal
         final Unsigner unsigner = new Unsigner();
 
         int unsigned = 0;
-        if ( "jar".equals( project.getPackaging() ) )
+        if ( project.getArtifact() != null && project.getArtifact()
+                                                     .getFile() != null && project.getArtifact()
+                                                                                  .getFile()
+                                                                                  .getName()
+                                                                                  .endsWith( ".jar" ) )
         {
-            final Artifact artifact = project.getArtifact();
-            final File src = artifact.getFile();
-            unsigner.unsign( src );
-            unsigned++;
+            final File src = project.getArtifact()
+                                    .getFile();
+            if ( src.exists() && !src.isDirectory() )
+            {
+                getLog().info( "Unsigning project artifact: " + src );
+                unsigner.unsign( src );
+                unsigned++;
+            }
         }
 
         final List<Artifact> attached = project.getAttachedArtifacts();
@@ -82,11 +91,17 @@ public class UnsignGoal
         {
             for ( final Artifact attachment : attached )
             {
-                if ( "jar".equals( attachment.getType() ) )
+                if ( attachment.getFile() != null && attachment.getFile()
+                                                               .getName()
+                                                               .endsWith( ".jar" ) )
                 {
                     final File src = attachment.getFile();
-                    unsigner.unsign( src );
-                    unsigned++;
+                    if ( src.exists() && !src.isDirectory() )
+                    {
+                        getLog().info( "Unsigning project artifact: " + src );
+                        unsigner.unsign( src );
+                        unsigned++;
+                    }
                 }
             }
         }
@@ -96,6 +111,7 @@ public class UnsignGoal
 
     /**
      * {@inheritDoc}
+     * 
      * @see org.apache.maven.plugin.Mojo#setLog(org.apache.maven.plugin.logging.Log)
      */
     public void setLog( final Log log )
@@ -105,6 +121,7 @@ public class UnsignGoal
 
     /**
      * {@inheritDoc}
+     * 
      * @see org.apache.maven.plugin.Mojo#getLog()
      */
     public synchronized Log getLog()
