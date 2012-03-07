@@ -25,6 +25,7 @@ import org.apache.maven.plugin.logging.SystemStreamLog;
 import org.apache.maven.project.MavenProject;
 
 import java.io.File;
+import java.util.List;
 
 /**
  * @goal unsign
@@ -43,15 +44,54 @@ public class UnsignGoal
     private MavenProject project;
 
     /**
+     * @parameter default-value="false" expression="${unsigner.skip}"
+     */
+    private boolean skip;
+
+    /**
+     * @parameter default-value="false" expression="${unsigner.processAttachments}"
+     */
+    private boolean skipAttachments;
+
+    /**
      * {@inheritDoc}
      * @see org.apache.maven.plugin.Mojo#execute()
      */
     public void execute()
         throws MojoExecutionException, MojoFailureException
     {
-        final Artifact artifact = project.getArtifact();
-        final File src = artifact.getFile();
-        new Unsigner().unsign( src );
+        if ( skip )
+        {
+            getLog().info( "Skipping unsigner per configuration." );
+            return;
+        }
+
+        final Unsigner unsigner = new Unsigner();
+
+        int unsigned = 0;
+        if ( "jar".equals( project.getPackaging() ) )
+        {
+            final Artifact artifact = project.getArtifact();
+            final File src = artifact.getFile();
+            unsigner.unsign( src );
+            unsigned++;
+        }
+
+        final List<Artifact> attached = project.getAttachedArtifacts();
+        if ( !skipAttachments && attached != null )
+        {
+            for ( final Artifact attachment : attached )
+            {
+                if ( "jar".equals( attachment.getType() ) )
+                {
+                    final File src = attachment.getFile();
+                    unsigner.unsign( src );
+                    unsigned++;
+                }
+            }
+        }
+
+        getLog().info( "Unsigned " + unsigned + " jars." );
     }
 
     /**
