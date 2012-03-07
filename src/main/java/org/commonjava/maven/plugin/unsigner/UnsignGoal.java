@@ -51,7 +51,7 @@ public class UnsignGoal
     /**
      * @parameter default-value="false" expression="${unsigner.processAttachments}"
      */
-    private boolean skipAttachments;
+    private boolean processAttachments;
 
     /**
      * {@inheritDoc}
