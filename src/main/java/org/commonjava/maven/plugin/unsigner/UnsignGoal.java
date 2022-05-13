@@ -1,4 +1,4 @@
-/*
+/**
  * Copyright 2012 Red Hat, Inc.
  * 
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -13,124 +13,126 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package org.commonjava.maven.plugin.unsigner;
 
 import java.io.File;
-import java.util.List;
-
+import java.util.Collection;
 import org.apache.maven.artifact.Artifact;
-import org.apache.maven.plugin.Mojo;
+import org.apache.maven.plugin.AbstractMojo;
 import org.apache.maven.plugin.MojoExecutionException;
 import org.apache.maven.plugin.MojoFailureException;
-import org.apache.maven.plugin.logging.Log;
-import org.apache.maven.plugin.logging.SystemStreamLog;
+import org.apache.maven.plugins.annotations.LifecyclePhase;
+import org.apache.maven.plugins.annotations.Mojo;
+import org.apache.maven.plugins.annotations.Parameter;
+import org.apache.maven.plugins.annotations.ResolutionScope;
 import org.apache.maven.project.MavenProject;
 
 /**
- * @goal unsign
- * @phase package
+ * Unsign goal
  */
-public class UnsignGoal
-    implements Mojo
+@Mojo(name = "unsign", defaultPhase = LifecyclePhase.PREPARE_PACKAGE, requiresDependencyResolution = ResolutionScope.RUNTIME)
+public class UnsignGoal extends AbstractMojo
 {
+   @Parameter(defaultValue = "${project}", readonly = true)
+   private MavenProject project;
 
-    private Log log;
+   @Parameter(defaultValue = "false", property = "unsigner.skip")
+   private boolean skip;
 
-    /**
-     * @parameter default-value="${project}"
-     * @readonly
-     */
-    private MavenProject project;
+   @Parameter(defaultValue = "true", property = "unsigner.processAttachments")
+   private boolean processAttachments;
 
-    /**
-     * @parameter default-value="false" expression="${unsigner.skip}"
-     */
-    private boolean skip;
+   @Parameter(defaultValue = "false", property = "unsigner.processDependencies")
+   private boolean processDependencies;
 
-    /**
-     * @parameter default-value="false" expression="${unsigner.processAttachments}"
-     */
-    private boolean processAttachments;
+   @Parameter(defaultValue = "", property = "unsigner.filter")
+   private String[] includes;
 
-    /**
-     * {@inheritDoc}
-     * 
-     * @see org.apache.maven.plugin.Mojo#execute()
-     */
-    public void execute()
-        throws MojoExecutionException, MojoFailureException
-    {
-        if ( skip )
-        {
-            getLog().info( "Skipping unsigner per configuration." );
-            return;
-        }
+   @Parameter(defaultValue = "", property = "unsigner.filter")
+   private String[] excludes;
 
-        final Unsigner unsigner = new Unsigner();
+   /**
+    * {@inheritDoc}
+    * 
+    * @see org.apache.maven.plugin.Mojo#execute()
+    */
+   public void execute() throws MojoExecutionException, MojoFailureException
+   {
+      if (skip)
+      {
+         getLog().info("Skipping unsigner per configuration.");
+         return;
+      }
 
-        int unsigned = 0;
-        if ( project.getArtifact() != null && project.getArtifact()
-                                                     .getFile() != null && project.getArtifact()
-                                                                                  .getFile()
-                                                                                  .getName()
-                                                                                  .endsWith( ".jar" ) )
-        {
-            final File src = project.getArtifact()
-                                    .getFile();
-            if ( src.exists() && !src.isDirectory() )
+      for(String s : includes)
+         getLog().info("+++ " + s);
+      for(String s : excludes)
+         getLog().info("--- " + s);
+
+      final Unsigner unsigner = new Unsigner();
+      int unsigned = 0;
+
+      if (processAttachments)
+         unsigned += unsignArtifacts(project.getAttachedArtifacts(), unsigner);
+
+      if (processDependencies)
+         unsigned += unsignArtifacts(project.getArtifacts(), unsigner);
+
+      getLog().info("Unsigned " + unsigned + " jars");
+   }
+
+   /**
+    * Unsign artifacts in given list.
+    *
+    * @param artifacts collection of artifacts
+    * @param unsigner unsigner
+    * @return number of unsigned artifacts
+    */
+   private int unsignArtifacts(Collection<Artifact> artifacts, Unsigner unsigner)
+   {
+      if (artifacts == null)
+         return 0;
+
+      int unsigned = 0;
+      for(final Artifact a : artifacts)
+      {
+         if (includes.length > 0)
+         {
+            boolean matched = false;
+            for(String id : includes)
             {
-                getLog().info( "Unsigning project artifact: " + src );
-                unsigner.unsign( src );
-                unsigned++;
+               matched = Glob.match(id, a.getId());
+               if (matched)
+                  break;
             }
-        }
+            if (!matched)
+               continue;
+         }
 
-        final List<Artifact> attached = project.getAttachedArtifacts();
-        if ( processAttachments && attached != null )
-        {
-            for ( final Artifact attachment : attached )
+         if (excludes.length > 0)
+         {
+            boolean matched = false;
+            for(String id : excludes)
             {
-                if ( attachment.getFile() != null && attachment.getFile()
-                                                               .getName()
-                                                               .endsWith( ".jar" ) )
-                {
-                    final File src = attachment.getFile();
-                    if ( src.exists() && !src.isDirectory() )
-                    {
-                        getLog().info( "Unsigning project artifact: " + src );
-                        unsigner.unsign( src );
-                        unsigned++;
-                    }
-                }
+               matched = Glob.match(id, a.getId());
+               if (matched)
+                  break;
             }
-        }
+            if (matched)
+               continue;
+         }
 
-        getLog().info( "Unsigned " + unsigned + " jars." );
-    }
-
-    /**
-     * {@inheritDoc}
-     * 
-     * @see org.apache.maven.plugin.Mojo#setLog(org.apache.maven.plugin.logging.Log)
-     */
-    public void setLog( final Log log )
-    {
-        this.log = log;
-    }
-
-    /**
-     * {@inheritDoc}
-     * 
-     * @see org.apache.maven.plugin.Mojo#getLog()
-     */
-    public synchronized Log getLog()
-    {
-        if ( log == null )
-        {
-            log = new SystemStreamLog();
-        }
-
-        return log;
-    }
+         if (a.getFile() != null && a.getFile().getName().endsWith(".jar"))
+         {
+            final File src = a.getFile();
+            if (src.exists() && !src.isDirectory())
+            {
+               getLog().info("Unsigning project artifact " + a.getId());
+               unsigner.unsign(src, getLog());
+               unsigned++;
+            }
+         }
+      }
+      return unsigned;
+   }
 }

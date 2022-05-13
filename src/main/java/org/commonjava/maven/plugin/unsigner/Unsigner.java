@@ -1,4 +1,4 @@
-/*
+/**
  * Copyright 2012 Red Hat, Inc.
  * 
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -13,7 +13,6 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package org.commonjava.maven.plugin.unsigner;
 
 import java.io.File;
@@ -21,90 +20,84 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.Enumeration;
-import java.util.logging.Level;
-import java.util.logging.Logger;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipFile;
 import java.util.zip.ZipOutputStream;
+import org.apache.maven.plugin.logging.Log;
 
 public class Unsigner
 {
+   public File unsign(final File src, Log log) throws RuntimeException
+   {
+      final File bak = new File(src.getParentFile(), src.getName() + ".bak");
 
-    private final Logger log = Logger.getLogger( getClass().getName() );
+      if (bak.exists())
+      {
+         bak.delete();
+      }
 
-    public File unsign( final File src )
-        throws RuntimeException
-    {
-        final File bak = new File( src.getParentFile(), src.getName() + ".bak" );
+      log.debug("Backing up original jar: " + src + "\n    to: " + bak);
+      src.renameTo(bak);
 
-        if ( bak.exists() )
-        {
-            bak.delete();
-        }
+      ZipFile in = null;
+      ZipOutputStream out = null;
+      try
+      {
+         in = new ZipFile(bak);
+         out = new ZipOutputStream(new FileOutputStream(src));
 
-        log.info( "Backing up original jar: " + src + "\n    to: " + bak );
-        src.renameTo( bak );
-
-        ZipFile in = null;
-        ZipOutputStream out = null;
-        try
-        {
-            in = new ZipFile( bak );
-            out = new ZipOutputStream( new FileOutputStream( src ) );
-
-            for ( final Enumeration<? extends ZipEntry> entries = in.entries(); entries.hasMoreElements(); )
+         for(final Enumeration<? extends ZipEntry> entries = in.entries(); entries.hasMoreElements();)
+         {
+            final ZipEntry entry = entries.nextElement();
+            if (entry.getName().endsWith(".SF") || entry.getName().endsWith(".RSA") || entry.getName().endsWith(".LIST"))
             {
-                final ZipEntry entry = entries.nextElement();
-                if ( entry.getName().endsWith( ".SF" ) || entry.getName().endsWith( ".RSA" )
-                    || entry.getName().endsWith( ".LIST" ) )
-                {
-                    continue;
-                }
-
-                out.putNextEntry( entry );
-                if ( !entry.isDirectory() )
-                {
-                    final InputStream stream = in.getInputStream( entry );
-                    final byte[] buf = new byte[16384];
-                    int read = -1;
-                    while ( ( read = stream.read( buf ) ) > -1 )
-                    {
-                        out.write( buf, 0, read );
-                    }
-                }
-                out.closeEntry();
-            }
-        }
-        catch ( final IOException e )
-        {
-            throw new RuntimeException( "Cannot read: " + bak, e );
-        }
-        finally
-        {
-            if ( in != null )
-            {
-                try
-                {
-                    in.close();
-                }
-                catch ( final IOException e )
-                {
-                }
+               continue;
             }
 
-            if ( out != null )
+            out.putNextEntry(entry);
+            if (!entry.isDirectory())
             {
-                try
-                {
-                    out.close();
-                }
-                catch ( final IOException e )
-                {
-                    log.log( Level.WARNING, "Failed to close output jar: " + src + ". Error: " + e.getMessage(), e );
-                }
+               final InputStream stream = in.getInputStream(entry);
+               final byte[] buf = new byte[16384];
+               int read = -1;
+               while((read = stream.read(buf)) > -1)
+               {
+                  out.write(buf, 0, read);
+               }
             }
-        }
+            out.closeEntry();
+         }
+      }
+      catch(final IOException e)
+      {
+         throw new RuntimeException("Cannot read: " + bak, e);
+      }
+      finally
+      {
+         if (in != null)
+         {
+            try
+            {
+               in.close();
+            }
+            catch(final IOException e)
+            {
+            }
+         }
 
-        return bak;
-    }
+         if (out != null)
+         {
+            try
+            {
+               out.close();
+            }
+            catch(final IOException e)
+            {
+               log.warn("Failed to close output jar: " + src + ". Error: " + e.getMessage(), e);
+            }
+         }
+      }
+
+      return bak;
+   }
 }
