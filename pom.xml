@@ -5,14 +5,35 @@
    <version>1.0</version>
    <packaging>maven-plugin</packaging>
    <name>Unsigner Plugin for Maven</name>
+   <description>This maven plugin strips signature from jar files</description>
+   <url>https://github.com/netxms/maven-unsigner-plugin</url>
    <properties>
       <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
    </properties>
+   <licenses>
+      <license>
+         <name>Apache License, Version 2.0</name>
+         <url>https://www.apache.org/licenses/LICENSE-2.0.html</url>
+      </license>
+   </licenses>
    <scm>
-      <connection>scm:git:http://github.com/jdcasey/unsigner-maven-plugin.git</connection>
-      <developerConnection>scm:git:git@github.com:jdcasey/unsigner-maven-plugin.git</developerConnection>
-      <url>http://github.com/jdcasey/unsigner-maven-plugin</url>
+      <connection>scm:git:https://github.com/netxms/maven-unsigner-plugin</connection>
+      <developerConnection>scm:git:git@github.com:github.com/netxms/maven-unsigner-plugin.git</developerConnection>
+      <url>https://github.com/netxms/maven-unsigner-plugin</url>
    </scm>
+   <developers>
+      <developer>
+         <id>victor.kirhenshtein</id>
+         <name>Victor Kirhenshtein</name>
+         <email>victor@netxms.org</email>
+         <organization>Raden Solutions</organization>
+         <organizationUrl>http://www.radensolutions.com</organizationUrl>
+         <roles>
+            <role>developer</role>
+         </roles>
+         <timezone>Europe/Riga</timezone>
+      </developer>
+   </developers>
    <dependencyManagement>
       <dependencies>
          <dependency>
