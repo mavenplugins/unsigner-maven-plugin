@@ -1,11 +1,13 @@
-<?xml version="1.0" encoding="UTF-8" standalone="no"?><project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+  xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
   <modelVersion>4.0.0</modelVersion>
 
   <parent>
     <groupId>io.github.mavenplugins</groupId>
     <artifactId>org-parent</artifactId>
     <version>3</version>
-    <relativePath/>
+    <relativePath />
   </parent>
 
   <artifactId>unsigner-maven-plugin</artifactId>
@@ -65,6 +67,7 @@
     <!-- MAVEN -->
     <version.maven>3.3.9</version.maven>
     <version.maven-plugin-plugin>3.4</version.maven-plugin-plugin>
+    <version.maven-jarsigner>3.0.0</version.maven-jarsigner>
     <!-- TEST -->
     <version.junit>4.13.2</version.junit>
   </properties>
@@ -81,6 +84,11 @@
     </dependencies>
   </dependencyManagement>
   <dependencies>
+    <dependency>
+      <groupId>org.apache.maven.shared</groupId>
+      <artifactId>maven-jarsigner</artifactId>
+      <version>${version.maven-jarsigner}</version>
+    </dependency>
     <dependency>
       <groupId>org.apache.maven</groupId>
       <artifactId>maven-plugin-api</artifactId>

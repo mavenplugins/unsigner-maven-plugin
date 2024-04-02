@@ -65,6 +65,25 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 - TBD
 
 
+## [1.1]
+<!-- !!! Align version in badge URLs as well !!! -->
+[![1.1 Badge](https://img.shields.io/nexus/r/io.github.mavenplugins/unsigner-maven-plugin?server=https://s01.oss.sonatype.org&label=Maven%20Central&queryOpt=:v=1.1)](https://central.sonatype.com/artifact/io.github.mavenplugins/unsigner-maven-plugin/1.1)
+
+### Summary
+- Update to use `JarSignerUtil` of `org.apache.maven.shared:maven-jarsigner` for unsigning
+
+### Updates
+- pom.xml:
+  - add compile dependency to `org.apache.maven.shared:maven-jarsigner:3.0.0`
+
+- UnsignGoal.java:
+  - replace usage of `Unsigner.unsign(...)` by `JarSignerUtil.unsignArchive(archiveFile)`
+  - Improve check of artifact File before calling `JarSignerUtil.unsignArchive(archiveFile)` 
+
+- Unsigner.java:
+  - remove since this class is obsolete now
+
+
 ## [1.0]
 <!-- !!! Align version in badge URLs as well !!! -->
 [![1.0 Badge](https://img.shields.io/nexus/r/io.github.mavenplugins/unsigner-maven-plugin?server=https://s01.oss.sonatype.org&label=Maven%20Central&queryOpt=:v=1.0)](https://central.sonatype.com/artifact/io.github.mavenplugins/unsigner-maven-plugin/1.0)
@@ -94,5 +113,6 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 - This is just a dummy placeholder to make the parser of GHCICD/release-notes-from-changelog@v1 happy!
 -->
 
-[Unreleased]: https://github.com/mavenplugins/unsigner-maven-plugin/compare/v1.0..HEAD
+[Unreleased]: https://github.com/mavenplugins/unsigner-maven-plugin/compare/v1.1..HEAD
+[1.1]: https://github.com/mavenplugins/unsigner-maven-plugin/compare/v1.0..v1.1
 [1.0]: https://github.com/mavenplugins/unsigner-maven-plugin/releases/tag/v1.0

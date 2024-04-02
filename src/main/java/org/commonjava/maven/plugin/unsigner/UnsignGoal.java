@@ -16,6 +16,7 @@
 package org.commonjava.maven.plugin.unsigner;
 
 import java.io.File;
+import java.io.IOException;
 import java.util.Collection;
 
 import org.apache.maven.artifact.Artifact;
@@ -27,6 +28,7 @@ import org.apache.maven.plugins.annotations.Mojo;
 import org.apache.maven.plugins.annotations.Parameter;
 import org.apache.maven.plugins.annotations.ResolutionScope;
 import org.apache.maven.project.MavenProject;
+import org.apache.maven.shared.jarsigner.JarSignerUtil;
 
 /**
  * Unsign goal
@@ -70,15 +72,14 @@ public class UnsignGoal extends AbstractMojo {
       getLog().info("--- " + s);
     }
 
-    final Unsigner unsigner = new Unsigner();
     int unsigned = 0;
 
     if (this.processAttachments) {
-      unsigned += unsignArtifacts(this.project.getAttachedArtifacts(), unsigner);
+      unsigned += unsignArtifacts(this.project.getAttachedArtifacts());
     }
 
     if (this.processDependencies) {
-      unsigned += unsignArtifacts(this.project.getArtifacts(), unsigner);
+      unsigned += unsignArtifacts(this.project.getArtifacts());
     }
 
     getLog().info("Unsigned " + unsigned + " jars");
@@ -88,10 +89,10 @@ public class UnsignGoal extends AbstractMojo {
    * Unsign artifacts in given list.
    *
    * @param artifacts collection of artifacts
-   * @param unsigner  unsigner
    * @return number of unsigned artifacts
+   * @throws MojoExecutionException
    */
-  private int unsignArtifacts(Collection<Artifact> artifacts, Unsigner unsigner) {
+  private int unsignArtifacts(Collection<Artifact> artifacts) throws MojoExecutionException {
     if (artifacts == null) {
       return 0;
     }
@@ -124,13 +125,16 @@ public class UnsignGoal extends AbstractMojo {
         }
       }
 
-      if (a.getFile() != null && a.getFile().getName().endsWith(".jar")) {
-        final File src = a.getFile();
-        if (src.exists() && !src.isDirectory()) {
+      final File artifactFile = a.getFile();
+      try {
+        if (artifactFile != null && artifactFile.exists() && !artifactFile.isDirectory()
+            && JarSignerUtil.isZipFile(artifactFile) && JarSignerUtil.isArchiveSigned(artifactFile)) {
           getLog().info("Unsigning project artifact " + a.getId());
-          unsigner.unsign(src, getLog());
+          JarSignerUtil.unsignArchive(artifactFile);
           unsigned++;
         }
+      } catch (final IOException ioe) {
+        throw new MojoExecutionException("Failed to unsign artifact file=" + artifactFile, ioe);
       }
     }
     return unsigned;
