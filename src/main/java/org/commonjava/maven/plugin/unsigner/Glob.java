@@ -21,127 +21,123 @@ package org.commonjava.maven.plugin.unsigner;
 /**
  * Glob matcher
  */
-public class Glob
-{
-	/**
-	 * Match string against glob - implementation. Ported from C code in libnetxms.
-	 * 
-	 * @param pattern glob
-	 * @param string string to match
-	 * @return true if string matches glob
-	 */
-	private static boolean matchInternal(char[] pattern, char[] string)
-	{
-		int mptr = 0;
-		int sptr = 0;
-		while(mptr < pattern.length)
-		{
-			switch(pattern[mptr])
-			{
-				case '?':
-					if (sptr >= string.length)
-						return false;
-					sptr++;
-					mptr++;
-					break;
-				case '*':
-					while((mptr < pattern.length) && (pattern[mptr] == '*'))
-						mptr++;
-					if (mptr == pattern.length)
-						return true;	// * at the end matches everything
-					while((mptr < pattern.length) && (pattern[mptr] == '?'))	// Handle "*?" case
-					{
-						if (sptr >= string.length)
-							return false;
-						sptr++;
-						mptr++;
-					}
-					
-					int bptr = mptr;	// Text block begins here
-	            while((mptr < pattern.length) && (pattern[mptr] != '?') && (pattern[mptr] != '*'))
-	               mptr++;     // Find the end of text block
-	            // Try to find rightmost matching block
-	            int eptr = -1;
-	            boolean finishScan = false;
-	            do
-	            {
-	               while(true)
-	               {
-	                  while((sptr < string.length) && (string[sptr] != pattern[bptr]))
-	                     sptr++;
-	                  if ((string.length - sptr) < (mptr - bptr))
-	                  {
-	                     if (eptr == -1)
-	                     {
-	                        return false;  // Length of remained text less than remaining pattern
-	                     }
-	                     else
-	                     {
-	                        sptr = eptr;   // Revert back to last match
-	                        finishScan = true;
-	                        break;
-	                     }
-	                  }
-	                  
-	                  boolean matched = true;
-	                  for(int i = 0; i < (mptr - bptr); i++)
-	                  {
-	                  	if (pattern[bptr + i] != string[sptr + i])
-	                  	{
-	                  		matched = false;
-	                  		break;
-	                  	}
-	                  }
-	                  if (matched)
-	                     break;
-	                  sptr++;
-	               }
-	               if (!finishScan)
-	               {
-	                  sptr += (mptr - bptr);   // Increment SPtr because we already match current fragment
-	                  eptr = sptr;   // Remember current point
-	               }
-	            }
-	            while(!finishScan);
-					break;
-				default:
-               if (sptr >= string.length)
-                  return false;
-					if (pattern[mptr] != string[sptr])
-						return false;
-					sptr++;
-					mptr++;
-					break;
-			}
-		}
+public class Glob {
+  /**
+   * Match string against glob - implementation. Ported from C code in libnetxms.
+   *
+   * @param pattern glob
+   * @param string  string to match
+   * @return true if string matches glob
+   */
+  private static boolean matchInternal(char[] pattern, char[] string) {
+    int mptr = 0;
+    int sptr = 0;
+    while (mptr < pattern.length) {
+      switch (pattern[mptr]) {
+        case '?':
+          if (sptr >= string.length) {
+            return false;
+          }
+          sptr++;
+          mptr++;
+          break;
+        case '*':
+          while (mptr < pattern.length && pattern[mptr] == '*') {
+            mptr++;
+          }
+          if (mptr == pattern.length) {
+            return true; // * at the end matches everything
+          }
+          while (mptr < pattern.length && pattern[mptr] == '?') // Handle "*?" case
+          {
+            if (sptr >= string.length) {
+              return false;
+            }
+            sptr++;
+            mptr++;
+          }
 
-		return sptr == string.length;
-	}
+          int bptr = mptr; // Text block begins here
+          while (mptr < pattern.length && pattern[mptr] != '?' && pattern[mptr] != '*') {
+            mptr++; // Find the end of text block
+          }
+          // Try to find rightmost matching block
+          int eptr = -1;
+          boolean finishScan = false;
+          do {
+            while (true) {
+              while (sptr < string.length && string[sptr] != pattern[bptr]) {
+                sptr++;
+              }
+              if (string.length - sptr < mptr - bptr) {
+                if (eptr == -1) {
+                  return false; // Length of remained text less than remaining pattern
+                } else {
+                  sptr = eptr; // Revert back to last match
+                  finishScan = true;
+                  break;
+                }
+              }
 
-	/**
-	 * Match string against glob
-	 * @param pattern glob
-	 * @param string string to match
-	 * @return true if string matches glob
-	 */
-	public static boolean match(String pattern, String string)
-	{
-		if (string.length() == 0)
-			return pattern.equals("*");
-		return matchInternal(pattern.toCharArray(), string.toCharArray());
-	}
+              boolean matched = true;
+              for (int i = 0; i < mptr - bptr; i++) {
+                if (pattern[bptr + i] != string[sptr + i]) {
+                  matched = false;
+                  break;
+                }
+              }
+              if (matched) {
+                break;
+              }
+              sptr++;
+            }
+            if (!finishScan) {
+              sptr += mptr - bptr; // Increment SPtr because we already match current fragment
+              eptr = sptr; // Remember current point
+            }
+          } while (!finishScan);
+          break;
+        default:
+          if (sptr >= string.length) {
+            return false;
+          }
+          if (pattern[mptr] != string[sptr]) {
+            return false;
+          }
+          sptr++;
+          mptr++;
+          break;
+      }
+    }
 
-	/**
-	 * Match string against glob ignoring characters case
-	 * 
-	 * @param pattern glob
-	 * @param string string to match
-	 * @return true if string matches glob
-	 */
-	public static boolean matchIgnoreCase(String pattern, String string)
-	{
-		if (string.length() == 0)
-			return pattern.equals("*");
-		return matchInternal(pattern.toUpperCase().toCharArray(), string.toUpperCase().toCharArray());
-	}
+    return sptr == string.length;
+  }
+
+  /**
+   * Match string against glob
+   *
+   * @param pattern glob
+   * @param string  string to match
+   * @return true if string matches glob
+   */
+  public static boolean match(String pattern, String string) {
+    if (string.length() == 0) {
+      return pattern.equals("*");
+    }
+    return matchInternal(pattern.toCharArray(), string.toCharArray());
+  }
+
+  /**
+   * Match string against glob ignoring characters case
+   *
+   * @param pattern glob
+   * @param string  string to match
+   * @return true if string matches glob
+   */
+  public static boolean matchIgnoreCase(String pattern, String string) {
+    if (string.length() == 0) {
+      return pattern.equals("*");
+    }
+    return matchInternal(pattern.toUpperCase().toCharArray(), string.toUpperCase().toCharArray());
+  }
 }
