@@ -1,16 +1,15 @@
-<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-  xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+<?xml version="1.0" encoding="UTF-8" standalone="no"?><project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
   <modelVersion>4.0.0</modelVersion>
 
   <parent>
     <groupId>io.github.mavenplugins</groupId>
     <artifactId>org-parent</artifactId>
     <version>3</version>
-    <relativePath></relativePath>
+    <relativePath/>
   </parent>
 
   <artifactId>unsigner-maven-plugin</artifactId>
-  <version>1.0-SNAPSHOT</version>
+  <version>1.0</version>
   <packaging>maven-plugin</packaging>
 
   <name>Unsigner Plugin for Maven</name>
@@ -52,7 +51,7 @@
   <scm>
     <connection>scm:git:https://github.com/mavenplugins/unsigner-maven-plugin</connection>
     <url>https://github.com/mavenplugins/unsigner-maven-plugin</url>
-    <tag>HEAD</tag>
+    <tag>v1.0</tag>
   </scm>
 
   <issueManagement>
