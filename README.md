@@ -64,5 +64,25 @@ If you want to unsign your project's attached artifacts in addition to the main 
 Alternatively, for debugging purposes, you could use the command line parameter:
 
 ```sh
-mvn -Dunsign.processAttachments=true ...
+mvn -Dunsigner.processAttachments=true ...
+```
+
+## Disable Processing of the Project Main Artifact
+
+If you do not want to unsign your project's main artifact, you can use the following plugin configuration:
+
+```xml
+<plugin>
+    <groupId>io.github.mavenplugins</groupId>
+    <artifactId>unsigner-maven-plugin</artifactId>
+    <configuration>
+        <processMainArtifact>false</processMainArtifact>
+    </configuration>
+</plugin>
+```
+
+Alternatively, for debugging purposes, you could use the command line parameter:
+
+```sh
+mvn -Dunsigner.processMainArtifact=false ...
 ```

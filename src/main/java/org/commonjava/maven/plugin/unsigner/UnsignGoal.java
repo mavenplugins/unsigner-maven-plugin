@@ -17,7 +17,9 @@ package org.commonjava.maven.plugin.unsigner;
 
 import java.io.File;
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.Collection;
+import java.util.List;
 
 import org.apache.maven.artifact.Artifact;
 import org.apache.maven.plugin.AbstractMojo;
@@ -35,21 +37,47 @@ import org.apache.maven.shared.jarsigner.JarSignerUtil;
  */
 @Mojo(name = "unsign", defaultPhase = LifecyclePhase.PREPARE_PACKAGE, requiresDependencyResolution = ResolutionScope.RUNTIME)
 public class UnsignGoal extends AbstractMojo {
+  /**
+   * Current Maven project or project module.
+   */
   @Parameter(defaultValue = "${project}", readonly = true)
   private MavenProject project;
 
+  /**
+   * Skip execution of this plugin.
+   */
   @Parameter(defaultValue = "false", property = "unsigner.skip")
   private boolean skip;
 
+  /**
+   * Unsign this projects main artifact if true.
+   */
+  @Parameter(defaultValue = "true", property = "unsigner.processMainArtifact")
+  private boolean processMainArtifact;
+
+  /**
+   * Unsign this projects attached artifacts if true.
+   */
   @Parameter(defaultValue = "true", property = "unsigner.processAttachments")
   private boolean processAttachments;
 
+  /**
+   * Unsign this projects dependency artifacts if true.
+   */
   @Parameter(defaultValue = "false", property = "unsigner.processDependencies")
   private boolean processDependencies;
 
-  @Parameter(defaultValue = "", property = "unsigner.filter")
+  /**
+   * Comma separated pattern(s) to filter artifact IDs to get included. All included, if not set. Wildcard characters
+   * '*' and '?' are supported. Patterns are NOT trimmed for white spaces.
+   */
+  @Parameter(defaultValue = "", property = "unsigner.filter.includes")
   private String[] includes;
 
+  /**
+   * Comma separated pattern(s) to filter artifact IDs for exclusion. No excluded, if not set. Wildcard characters
+   * '*' and '?' are supported. Exclusion wins over inclusion. Patterns are NOT trimmed for white spaces.
+   */
   @Parameter(defaultValue = "", property = "unsigner.filter")
   private String[] excludes;
 
@@ -66,23 +94,29 @@ public class UnsignGoal extends AbstractMojo {
     }
 
     for (String s : this.includes) {
-      getLog().info("+++ " + s);
+      getLog().info("+++ \"" + s + "\"");
     }
     for (String s : this.excludes) {
-      getLog().info("--- " + s);
+      getLog().info("--- \"" + s + "\"");
     }
 
-    int unsigned = 0;
+    final List<Artifact> artifacts = new ArrayList<Artifact>();
+
+    if (this.processMainArtifact) {
+      artifacts.add(this.project.getArtifact());
+    }
 
     if (this.processAttachments) {
-      unsigned += unsignArtifacts(this.project.getAttachedArtifacts());
+      artifacts.addAll(this.project.getAttachedArtifacts());
     }
 
     if (this.processDependencies) {
-      unsigned += unsignArtifacts(this.project.getArtifacts());
+      artifacts.addAll(this.project.getArtifacts());
     }
 
-    getLog().info("Unsigned " + unsigned + " jars");
+    final int unsignCount = unsignArtifacts(artifacts);
+
+    getLog().info("Unsigned " + unsignCount + (unsignCount == 1 ? " jar" : " jars"));
   }
 
   /**
@@ -97,46 +131,48 @@ public class UnsignGoal extends AbstractMojo {
       return 0;
     }
 
-    int unsigned = 0;
-    for (final Artifact a : artifacts) {
+    int unsignCount = 0;
+    for (final Artifact artifact : artifacts) {
+      final String artifactId = artifact.getId();
+      boolean isIncluded = true;
       if (this.includes.length > 0) {
-        boolean matched = false;
-        for (String id : this.includes) {
-          matched = Glob.match(id, a.getId());
-          if (matched) {
+        isIncluded = false;
+        for (String includePattern : this.includes) {
+          isIncluded = Glob.match(includePattern, artifactId);
+          if (isIncluded) {
             break;
           }
         }
-        if (!matched) {
-          continue;
-        }
       }
 
-      if (this.excludes.length > 0) {
-        boolean matched = false;
-        for (String id : this.excludes) {
-          matched = Glob.match(id, a.getId());
-          if (matched) {
+      if (isIncluded && this.excludes.length > 0) {
+        for (String excludePattern : this.excludes) {
+          if (Glob.match(excludePattern, artifactId)) {
+            isIncluded = false;
             break;
           }
         }
-        if (matched) {
-          continue;
-        }
       }
 
-      final File artifactFile = a.getFile();
+      if (!isIncluded) {
+        getLog().info("Filter artifact with ID=" + artifactId);
+        continue;
+      }
+
+      final File artifactFile = artifact.getFile();
       try {
         if (artifactFile != null && artifactFile.exists() && !artifactFile.isDirectory()
             && JarSignerUtil.isZipFile(artifactFile) && JarSignerUtil.isArchiveSigned(artifactFile)) {
-          getLog().info("Unsigning project artifact " + a.getId());
+          getLog().info("Unsigning artifact with ID=" + artifactId);
           JarSignerUtil.unsignArchive(artifactFile);
-          unsigned++;
+          unsignCount++;
+        } else {
+          getLog().info("Artifact with ID=" + artifactId + " is no signed JAR");
         }
       } catch (final IOException ioe) {
         throw new MojoExecutionException("Failed to unsign artifact file=" + artifactFile, ioe);
       }
     }
-    return unsigned;
+    return unsignCount;
   }
 }

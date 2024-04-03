@@ -70,18 +70,35 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 [![1.1 Badge](https://img.shields.io/nexus/r/io.github.mavenplugins/unsigner-maven-plugin?server=https://s01.oss.sonatype.org&label=Maven%20Central&queryOpt=:v=1.1)](https://central.sonatype.com/artifact/io.github.mavenplugins/unsigner-maven-plugin/1.1)
 
 ### Summary
-- Update to use `JarSignerUtil` of `org.apache.maven.shared:maven-jarsigner` for unsigning
+- Use `JarSignerUtil` of `org.apache.maven.shared:maven-jarsigner` for unsigning
+- Fix -D property examples in README.md
+- Fix to unsign project main artifact by default
+- Add configuration item `processMainArtifact` to disable unsigning the project main artifact
+- Add help descriptions to Mojo parameters
 
-### Updates
+### Fixes
+- README.md:
+  - Fix -D property examples
+
+- UnsignGoal.java:
+  - Fix to unsign project main artifact by default
+
+### Changes
 - pom.xml:
   - add compile dependency to `org.apache.maven.shared:maven-jarsigner:3.0.0`
 
 - UnsignGoal.java:
   - replace usage of `Unsigner.unsign(...)` by `JarSignerUtil.unsignArchive(archiveFile)`
-  - Improve check of artifact File before calling `JarSignerUtil.unsignArchive(archiveFile)` 
-
+  - improve check of artifact File before calling `JarSignerUtil.unsignArchive(archiveFile)`
+  - add configuration item `processMainArtifact` (default=true)
+  - add info log in case artifact ID is filtered
+  - add help descriptions to Mojo parameters
+  
 - Unsigner.java:
   - remove since this class is obsolete now
+  
+- README.md:
+  - add description for config item `processMainArtifact`
 
 
 ## [1.0]
