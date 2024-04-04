@@ -13,7 +13,7 @@ This is a very simple plugin whose only function is to strip signature files out
 <plugin>
     <groupId>io.github.mavenplugins</groupId>
     <artifactId>unsigner-maven-plugin</artifactId>
-    <version>1.0</version>
+    <version>1.1</version>
     <executions>
         <execution>
             <id>unsign-jar</id>
